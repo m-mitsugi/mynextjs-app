@@ -1,0 +1,67 @@
+# Next.js&Reactメモ
+
+参考
+
+https://zenn.dev/sikkim/books/how_to_create_api_sales_service/viewer/1_front_end_environment
+
+■プロジェクト作成
+
+- react
+
+npm create vite@latest
+
+npm install
+
+- Next.js
+
+npx create-next-app@latest プロジェクト名
+
+■サーバー起動
+
+npm run dev
+
+■tailwindcss
+
+npm i -D tailwindcss postcss autoprefixer
+
+よく使うクラス
+
+https://zenn.dev/yohei_watanabe/books/c0b573713734b9/viewer/cfd413
+
+■デバック設定
+
+https://qiita.com/fsd_maclala/items/5878af09e70258fa2e68
+
+■Next.js初学者
+
+https://qiita.com/yu-Matsu/items/4ebd28d5ecf2fd8acf98
+
+■**Azure Cosmos DB**
+
+node.js⇒cosmosdbへのアクセス方法が載って
+
+https://qiita.com/ymasaoka/items/3784c64baf30bbe7b761
+
+マニュアル
+
+https://learn.microsoft.com/ja-jp/azure/cosmos-db/nosql/quickstart-nodejs?pivots=devcontainer-codespace#get-a-container
+
+DB更新のサンプルコード
+
+https://miyohide.hatenablog.com/entry/2020/09/06/182831
+
+https://learn.microsoft.com/ja-jp/azure/cosmos-db/nosql/samples-nodejs
+
+・cosmosdb利用にあたりNode.js + Express.js + TypeScriptの準備
+
+https://qiita.com/ymasaoka/items/0b0b726354c3cfd38021
+
+
+
+別ブランチ作成⇒コミット
+https://qiita.com/takamii228/items/80c0996a0b5fa39337bd
+プルリク一連の流れ
+https://qiita.com/kuuuuumiiiii/items/42d2d9ed11e3b29c22cf
+
+reactで使えるアイコン集
+https://www.radix-ui.com/icons
