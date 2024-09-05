@@ -65,3 +65,44 @@ https://qiita.com/kuuuuumiiiii/items/42d2d9ed11e3b29c22cf
 
 reactで使えるアイコン集
 https://www.radix-ui.com/icons
+
+
+// 全角を半角に変換する関数
+function toHalfWidth(str) {
+  return str.replace(/[Ａ-Ｚａ-ｚ０-９！-～]/g, function(s) {
+    return String.fromCharCode(s.charCodeAt(0) - 0xFEE0);
+  }).replace(/　/g, " ").replace(/[ァ-ヶ]/g, function(s) {
+    // 全角カタカナを半角カタカナに
+    const katakanaFull = "アイウエオカキクケコサシスセソタチツテトナニヌネノハヒフヘホマミムメモヤユヨラリルレロワヲンヴ";
+    const katakanaHalf = "ｱｲｳｴｵｶｷｸｹｺｻｼｽｾｿﾀﾁﾂﾃﾄﾅﾆﾇﾈﾉﾊﾋﾌﾍﾎﾏﾐﾑﾒﾓﾔﾕﾖﾗﾘﾙﾚﾛﾜｦﾝｳﾞ";
+    const idx = katakanaFull.indexOf(s);
+    return idx >= 0 ? katakanaHalf[idx] : s;
+  });
+}
+
+// 全半角・大文字小文字を区別しない検索を行う関数
+function searchList(list, searchTerm) {
+  // 検索キーワードとリストの項目を全て半角・小文字に統一
+  const normalizedSearchTerm = toHalfWidth(searchTerm).toLowerCase();
+  return list.filter(item => toHalfWidth(item).toLowerCase().includes(normalizedSearchTerm));
+}
+
+// 検索対象のリスト
+const list = [
+  "テスト123",
+  "ＡＢＣ１２３",
+  "テストｱｲｳ123",
+  "abc123",
+  "ABC123",
+  "123",
+  "カタカナ",
+  "ﾊﾝｶｸｶﾀｶﾅ",
+  "Full-width ＡＢＣ"
+];
+
+// 検索キーワード
+const searchTerm = "abc";
+
+// 検索実行
+const result = searchList(list, searchTerm);
+console.log(result);
