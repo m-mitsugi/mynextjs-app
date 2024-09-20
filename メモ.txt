@@ -151,3 +151,27 @@ const testString = "ガギグゲゴパピプペポアイウエオッヴァィゥ
 
 // 変換結果を表示
 console.log(toHalfWidthKatakana(testString));
+
+
+const a = [
+  { id: 1, name: "Alice" },
+  { id: 2, name: "Bob" },
+  { id: 3, name: "Charlie" }
+];
+
+const b = [
+  { id: 1, age: 25, city: "New York" },
+  { id: 2, age: 30, city: "London" },
+  { id: 4, age: 28, city: "Paris" } // id: 4 は a にはない
+];
+
+const merged = a.map(objA => {
+  // b 配列の中で objA.id と一致するものを探す
+  const objB = b.find(objB => objB.id === objA.id);
+  
+  // 一致するものがあれば、objA と objB をマージする
+  return objB ? { ...objA, ...objB } : objA;
+});
+
+console.log(merged);
+
