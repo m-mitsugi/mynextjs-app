@@ -201,3 +201,58 @@ const merged = a
   .filter(obj => obj !== null); // null の要素を除外
 
 console.log(merged);
+
+
+import { useEffect } from 'react';
+import './styles.css'; // グローバルCSSをインポート
+
+const ScrollResetComponent = () => {
+  useEffect(() => {
+    const elements = document.querySelectorAll('.scrollable-custom');
+    
+    elements.forEach(element => {
+      element.scrollTop = 0; // 各要素のスクロール位置をリセット
+    });
+  }, []);
+
+  return (
+    <div>
+      <div className="scrollable-custom">
+        <div style={{ height: '1000px' }}>Scroll me!</div>
+      </div>
+      <div className="scrollable-custom">
+        <div style={{ height: '1000px' }}>Scroll me too!</div>
+      </div>
+    </div>
+  );
+};
+
+export default ScrollResetComponent;
+
+
+import { useEffect } from 'react';
+
+const ScrollResetComponent = () => {
+  useEffect(() => {
+    const elements = document.querySelectorAll('.scrollable');
+    
+    elements.forEach(element => {
+      element.scrollTop = 0; // 各要素のスクロール位置をリセット
+    });
+  }, []);
+
+  return (
+    <div>
+      <div className="scrollable h-64 overflow-y-auto">
+        <div style={{ height: '1000px' }}>Scroll me!</div>
+      </div>
+      <div className="scrollable h-64 overflow-y-auto">
+        <div style={{ height: '1000px' }}>Scroll me too!</div>
+      </div>
+    </div>
+  );
+};
+
+export default ScrollResetComponent;
+
+
