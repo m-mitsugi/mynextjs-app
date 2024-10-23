@@ -66,193 +66,76 @@ https://qiita.com/kuuuuumiiiii/items/42d2d9ed11e3b29c22cf
 reactで使えるアイコン集
 https://www.radix-ui.com/icons
 
+// lib/azureBlob.ts
+import { BlobServiceClient } from '@azure/storage-blob';
 
-// 全角を半角に変換する関数
-function toHalfWidth(str) {
-  return str.replace(/[Ａ-Ｚａ-ｚ０-９！-～]/g, function(s) {
-    return String.fromCharCode(s.charCodeAt(0) - 0xFEE0);
-  }).replace(/　/g, " ").replace(/[ァ-ヶ]/g, function(s) {
-    // 全角カタカナを半角カタカナに
-    const katakanaFull = "アイウエオカキクケコサシスセソタチツテトナニヌネノハヒフヘホマミムメモヤユヨラリルレロワヲンヴ";
-    const katakanaHalf = "ｱｲｳｴｵｶｷｸｹｺｻｼｽｾｿﾀﾁﾂﾃﾄﾅﾆﾇﾈﾉﾊﾋﾌﾍﾎﾏﾐﾑﾒﾓﾔﾕﾖﾗﾘﾙﾚﾛﾜｦﾝｳﾞ";
-    const idx = katakanaFull.indexOf(s);
-    return idx >= 0 ? katakanaHalf[idx] : s;
-  });
+const connectionString = process.env.AZURE_STORAGE_CONNECTION_STRING;
+
+export const getBlobServiceClient = () => {
+  if (!connectionString) {
+    throw new Error('Azureストレージ接続文字列が設定されていません');
+  }
+
+  const blobServiceClient = BlobServiceClient.fromConnectionString(connectionString);
+  return blobServiceClient;
+};
+
+// pages/api/getBlobs.ts
+import type { NextApiRequest, NextApiResponse } from 'next';
+import { getBlobServiceClient } from '../../lib/azureBlob';
+
+export default async function handler(req: NextApiRequest, res: NextApiResponse) {
+  try {
+    // Blobサービスクライアントを取得
+    const blobServiceClient = getBlobServiceClient();
+    const containerName = 'your-container-name';  // コンテナ名を指定
+    const containerClient = blobServiceClient.getContainerClient(containerName);
+
+    // コンテナ内のBlobをリストアップ
+    let blobs: { name: string, url: string }[] = [];
+    for await (const blob of containerClient.listBlobsFlat()) {
+      blobs.push({
+        name: blob.name,
+        url: `https://${process.env.AZURE_STORAGE_ACCOUNT_NAME}.blob.core.windows.net/${containerName}/${blob.name}`
+      });
+    }
+
+    res.status(200).json(blobs);
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: 'Blobの取得に失敗しました' });
+  }
 }
 
-// 全半角・大文字小文字を区別しない検索を行う関数
-function searchList(list, searchTerm) {
-  // 検索キーワードとリストの項目を全て半角・小文字に統一
-  const normalizedSearchTerm = toHalfWidth(searchTerm).toLowerCase();
-  return list.filter(item => toHalfWidth(item).toLowerCase().includes(normalizedSearchTerm));
-}
 
-// 検索対象のリスト
-const list = [
-  "テスト123",
-  "ＡＢＣ１２３",
-  "テストｱｲｳ123",
-  "abc123",
-  "ABC123",
-  "123",
-  "カタカナ",
-  "ﾊﾝｶｸｶﾀｶﾅ",
-  "Full-width ＡＢＣ"
-];
+// pages/index.tsx
+import { useEffect, useState } from 'react';
 
-// 検索キーワード
-const searchTerm = "abc";
+export default function Home() {
+  const [blobs, setBlobs] = useState<any[]>([]);
 
-// 検索実行
-const result = searchList(list, searchTerm);
-console.log(result);
-
-// 全角カタカナを半角カタカナに変換する関数
-function toHalfWidthKatakana(str) {
-  const katakanaFull = [
-    "ガ", "ギ", "グ", "ゲ", "ゴ",
-    "ザ", "ジ", "ズ", "ゼ", "ゾ",
-    "ダ", "ヂ", "ヅ", "デ", "ド",
-    "バ", "ビ", "ブ", "ベ", "ボ",
-    "パ", "ピ", "プ", "ペ", "ポ",
-    "カ", "キ", "ク", "ケ", "コ",
-    "サ", "シ", "ス", "セ", "ソ",
-    "タ", "チ", "ツ", "テ", "ト",
-    "ナ", "ニ", "ヌ", "ネ", "ノ",
-    "ハ", "ヒ", "フ", "ヘ", "ホ",
-    "マ", "ミ", "ム", "メ", "モ",
-    "ヤ", "ユ", "ヨ", "ラ", "リ", "ル", "レ", "ロ", "ワ", "ヲ", "ン", "ッ", "ァ", "ィ", "ゥ", "ェ", "ォ", "ャ", "ュ", "ョ", "ヴ"
-  ];
-
-  const katakanaHalf = [
-    "ｶﾞ", "ｷﾞ", "ｸﾞ", "ｹﾞ", "ｺﾞ",
-    "ｻﾞ", "ｼﾞ", "ｽﾞ", "ｾﾞ", "ｿﾞ",
-    "ﾀﾞ", "ﾁﾞ", "ﾂﾞ", "ﾃﾞ", "ﾄﾞ",
-    "ﾊﾞ", "ﾋﾞ", "ﾌﾞ", "ﾍﾞ", "ﾎﾞ",
-    "ﾊﾟ", "ﾋﾟ", "ﾌﾟ", "ﾍﾟ", "ﾎﾟ",
-    "ｶ", "ｷ", "ｸ", "ｹ", "ｺ",
-    "ｻ", "ｼ", "ｽ", "ｾ", "ｿ",
-    "ﾀ", "ﾁ", "ﾂ", "ﾃ", "ﾄ",
-    "ﾅ", "ﾆ", "ﾇ", "ﾈ", "ﾉ",
-    "ﾊ", "ﾋ", "ﾌ", "ﾍ", "ﾎ",
-    "ﾏ", "ﾐ", "ﾑ", "ﾒ", "ﾓ",
-    "ﾔ", "ﾕ", "ﾖ", "ﾗ", "ﾘ", "ﾙ", "ﾚ", "ﾛ", "ﾜ", "ｦ", "ﾝ", "ｯ", "ｧ", "ｨ", "ｩ", "ｪ", "ｫ", "ｬ", "ｭ", "ｮ", "ｳﾞ"
-  ];
-
-  // 全角カタカナを半角に変換
-  return str.replace(/[ァ-ヶヴー]/g, function (s) {
-    const index = katakanaFull.indexOf(s);
-    return index >= 0 ? katakanaHalf[index] : s;
-  });
-}
-
-// テスト用の文字列
-const testString = "ガギグゲゴパピプペポアイウエオッヴァィゥヴ";
-
-// 変換結果を表示
-console.log(toHalfWidthKatakana(testString));
-
-
-const a = [
-  { id: 1, name: "Alice" },
-  { id: 2, name: "Bob" },
-  { id: 3, name: "Charlie" }
-];
-
-const b = [
-  { id: 1, age: 25, city: "New York" },
-  { id: 2, age: 30, city: "London" },
-  { id: 4, age: 28, city: "Paris" } // id: 4 は a にはない
-];
-
-const merged = a.map(objA => {
-  // b 配列の中で objA.id と一致するものを探す
-  const objB = b.find(objB => objB.id === objA.id);
-  
-  // 一致するものがあれば、objA と objB をマージする
-  return objB ? { ...objA, ...objB } : objA;
-});
-
-console.log(merged);
-
-
-
-
-const a = [
-  { id: 1, name: "Alice" },
-  { id: 2, name: "Bob" },
-  { id: 3, name: "Charlie" }
-];
-
-const b = [
-  { id: 1, age: 25, city: "New York" },
-  { id: 2, age: 30, city: "London" },
-  { id: 4, age: 28, city: "Paris" } // id: 4 は a にはない
-];
-
-const merged = a
-  .map(objA => {
-    // b 配列の中で objA.id と一致するものを探す
-    const objB = b.find(objB => objB.id === objA.id);
-    
-    // 一致するものがあれば、objA と objB をマージする
-    return objB ? { ...objA, ...objB } : null;
-  })
-  .filter(obj => obj !== null); // null の要素を除外
-
-console.log(merged);
-
-
-import { useEffect } from 'react';
-import './styles.css'; // グローバルCSSをインポート
-
-const ScrollResetComponent = () => {
   useEffect(() => {
-    const elements = document.querySelectorAll('.scrollable-custom');
-    
-    elements.forEach(element => {
-      element.scrollTop = 0; // 各要素のスクロール位置をリセット
-    });
+    const fetchBlobs = async () => {
+      const response = await fetch('/api/getBlobs');
+      const data = await response.json();
+      setBlobs(data);
+    };
+
+    fetchBlobs();
   }, []);
 
   return (
     <div>
-      <div className="scrollable-custom">
-        <div style={{ height: '1000px' }}>Scroll me!</div>
-      </div>
-      <div className="scrollable-custom">
-        <div style={{ height: '1000px' }}>Scroll me too!</div>
-      </div>
+      <h1>Azure Blob Storage Files</h1>
+      <ul>
+        {blobs.map((blob) => (
+          <li key={blob.name}>
+            <a href={blob.url} target="_blank" rel="noopener noreferrer">
+              {blob.name}
+            </a>
+          </li>
+        ))}
+      </ul>
     </div>
   );
-};
-
-export default ScrollResetComponent;
-
-
-import { useEffect } from 'react';
-
-const ScrollResetComponent = () => {
-  useEffect(() => {
-    const elements = document.querySelectorAll('.scrollable');
-    
-    elements.forEach(element => {
-      element.scrollTop = 0; // 各要素のスクロール位置をリセット
-    });
-  }, []);
-
-  return (
-    <div>
-      <div className="scrollable h-64 overflow-y-auto">
-        <div style={{ height: '1000px' }}>Scroll me!</div>
-      </div>
-      <div className="scrollable h-64 overflow-y-auto">
-        <div style={{ height: '1000px' }}>Scroll me too!</div>
-      </div>
-    </div>
-  );
-};
-
-export default ScrollResetComponent;
-
-
+}
