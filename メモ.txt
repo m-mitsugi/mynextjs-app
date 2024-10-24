@@ -305,3 +305,28 @@ async function streamToBuffer(readableStream: ReadableStream<Uint8Array> | null)
 
   return buffer;
 }
+
+
+
+// Blobをダウンロードして文字列に変換する
+const downloadBlockBlobResponse = await blobClient.download();
+const downloaded = await blobToString(await downloadBlockBlobResponse.blobBody);
+console.log("Downloaded blob content", downloaded);
+
+// Blobを文字列に変換する関数
+async function blobToString(blob: Blob): Promise<string> {
+  const fileReader = new FileReader();
+  
+  return new Promise<string>((resolve, reject) => {
+    fileReader.onloadend = (ev: ProgressEvent<FileReader>) => {
+      if (ev.target && ev.target.result) {
+        resolve(ev.target.result as string);
+      } else {
+        reject(new Error('Failed to read the Blob'));
+      }
+    };
+    
+    fileReader.onerror = reject;
+    fileReader.readAsText(blob);
+  });
+}
