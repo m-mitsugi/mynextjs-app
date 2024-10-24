@@ -139,3 +139,147 @@ export default function Home() {
     </div>
   );
 }
+
+
+Next.js（TypeScript）とExpress（JavaScript）を使って、フロントエンドからバックエンドにリクエストを送り、SASトークンを生成して返す方法を以下の手順で説明します。
+
+1. Express バックエンドでSASトークンを生成
+
+まず、Azure SDKを使ってSASトークンを生成するため、バックエンドに @azure/storage-blob パッケージをインストールします。
+
+npm install @azure/storage-blob
+
+次に、バックエンドでSASトークンを生成するためのエンドポイントを設定します。
+
+server.js (Express サーバー)
+
+const express = require('express');
+const { BlobServiceClient, StorageSharedKeyCredential, generateBlobSASQueryParameters, BlobSASPermissions } = require('@azure/storage-blob');
+require('dotenv').config(); // .envファイルにストレージアカウントの情報を保存
+
+const app = express();
+const port = 3000;
+
+// ストレージアカウントの情報を環境変数から取得
+const accountName = process.env.AZURE_STORAGE_ACCOUNT_NAME;
+const accountKey = process.env.AZURE_STORAGE_ACCOUNT_KEY;
+
+app.get('/generate-sas', async (req, res) => {
+  try {
+    // Azureの認証情報をセット
+    const sharedKeyCredential = new StorageSharedKeyCredential(accountName, accountKey);
+    
+    // SASトークンを生成するためのBlobクライアント
+    const blobServiceClient = new BlobServiceClient(
+      `https://${accountName}.blob.core.windows.net`,
+      sharedKeyCredential
+    );
+
+    // コンテナ名やBlob名を指定
+    const containerName = req.query.containerName;
+    const blobName = req.query.blobName;
+
+    // SASトークンの有効期限と権限を設定
+    const permissions = new BlobSASPermissions();
+    permissions.read = true;  // 読み取りのみ許可
+    permissions.write = true; // 必要に応じて書き込みも許可
+
+    const expiryDate = new Date();
+    expiryDate.setMinutes(expiryDate.getMinutes() + 30); // 30分間有効
+
+    // SASパラメータを生成
+    const sasToken = generateBlobSASQueryParameters({
+      containerName,
+      blobName,
+      permissions,
+      expiresOn: expiryDate
+    }, sharedKeyCredential).toString();
+
+    const sasUrl = `https://${accountName}.blob.core.windows.net/${containerName}/${blobName}?${sasToken}`;
+
+    // SAS URLを返す
+    res.json({ sasUrl });
+  } catch (error) {
+    console.error('Error generating SAS token:', error);
+    res.status(500).json({ error: 'Failed to generate SAS token' });
+  }
+});
+
+app.listen(port, () => {
+  console.log(`Server is running on port ${port}`);
+});
+
+2. 環境変数の設定
+
+Azureストレージアカウントの名前とキーは安全に管理する必要があります。.env ファイルを作成して次のように設定します。
+
+.env
+
+AZURE_STORAGE_ACCOUNT_NAME=your_storage_account_name
+AZURE_STORAGE_ACCOUNT_KEY=your_storage_account_key
+
+.gitignore に .env を追加してバージョン管理システムにコミットしないようにします。
+
+3. Next.js フロントエンドからリクエストを送信
+
+次に、Next.js（TypeScript）でフロントエンドからバックエンドにリクエストを送信して、SASトークンを取得します。
+
+pages/index.tsx (Next.js フロントエンド)
+
+import { useState } from 'react';
+
+const Home = () => {
+  const [sasUrl, setSasUrl] = useState<string | null>(null);
+
+  const getSasToken = async () => {
+    try {
+      const response = await fetch(`/api/generate-sas?containerName=your-container&blobName=your-blob`);
+      const data = await response.json();
+      setSasUrl(data.sasUrl);
+    } catch (error) {
+      console.error('Error fetching SAS token:', error);
+    }
+  };
+
+  return (
+    <div>
+      <h1>Azure Blob SAS Token Example</h1>
+      <button onClick={getSasToken}>Get SAS Token</button>
+      {sasUrl && (
+        <div>
+          <p>SAS URL:</p>
+          <a href={sasUrl} target="_blank" rel="noopener noreferrer">
+            {sasUrl}
+          </a>
+        </div>
+      )}
+    </div>
+  );
+};
+
+export default Home;
+
+4. APIリクエストの設定
+
+Next.js の pages/api ディレクトリに、バックエンドの /generate-sas エンドポイントにリクエストを投げるコードを配置することもできます。
+
+pages/api/generate-sas.ts
+
+import type { NextApiRequest, NextApiResponse } from 'next';
+
+export default async function handler(req: NextApiRequest, res: NextApiResponse) {
+  const { containerName, blobName } = req.query;
+
+  // バックエンドの Express サーバーにリクエストを送信
+  const response = await fetch(`http://localhost:3000/generate-sas?containerName=${containerName}&blobName=${blobName}`);
+  const data = await response.json();
+
+  res.status(200).json(data);
+}
+
+5. 動作確認
+
+	•	Expressサーバーを起動します。
+	•	Next.jsアプリケーションから、Blobに対するSASトークンを取得し、それを使ってAzure Blob Storageにアクセスできるか確認します。
+
+このセットアップにより、Next.jsフロントエンドからSASトークンをリクエストし、Expressバックエンドで生成して返すことができるようになります。
