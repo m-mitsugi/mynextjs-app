@@ -330,3 +330,31 @@ async function blobToString(blob: Blob): Promise<string> {
     fileReader.readAsText(blob);
   });
 }
+
+blobToString 関数は、FileReader.readAsText() メソッドを使ってBlobを文字列に変換していますが、この方法はテキストデータに対して適しています。画像やPDFのようなバイナリデータを文字列に変換する場合、readAsText() ではなく、readAsDataURL() か readAsArrayBuffer() を使う必要があります。
+
+以下に、それぞれの方法について説明します。
+
+1. 画像やPDFをBase64形式に変換 (Data URL)
+
+画像やPDFなどのバイナリデータをBase64エンコードされた文字列に変換するには、readAsDataURL() を使います。これにより、画像やPDFをData URL形式の文字列に変換できます。
+
+async function blobToDataURL(blob: Blob): Promise<string> {
+  const fileReader = new FileReader();
+  
+  return new Promise<string>((resolve, reject) => {
+    fileReader.onloadend = (ev: ProgressEvent<FileReader>) => {
+      if (ev.target && ev.target.result) {
+        resolve(ev.target.result as string); // Data URL (Base64 encoded string)
+      } else {
+        reject(new Error('Failed to read the Blob'));
+      }
+    };
+    
+    fileReader.onerror = reject;
+    fileReader.readAsDataURL(blob); // バイナリデータをBase64エンコードされた文字列に変換
+  });
+}
+
+2. **画像やPDFをバイナリデ
+
