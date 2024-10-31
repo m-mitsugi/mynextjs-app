@@ -390,4 +390,46 @@ const blobClient = containerClient.getBlobClient('example-image.jpeg');
 // ダウンロードして表示
 await downloadAndDisplayJpegImage(blobClient, 'jpegImage');
 
+はい、Cosmos DB のバルク操作では、Create（インサート）と Replace（更新）を同時に行うことが可能です。それぞれのオブジェクトに対して異なる operationType を指定すれば、一括で登録と更新を同時に行えます。
+
+以下に、登録と更新を同時に行う例を示します。
+
+const { CosmosClient } = require("@azure/cosmos");
+
+const client = new CosmosClient({ endpoint, key });
+const database = client.database("your-database-id");
+const container = database.container("your-container-id");
+
+async function bulkUpsert(dataArray) {
+    const operations = dataArray.map((data) => {
+        // 登録（Create）と更新（Replace）を切り分け
+        const isNew = !data.id; // IDがない場合は新規登録とする（例）
+        return {
+            operationType: isNew ? "Create" : "Replace",
+            resourceBody: data,
+            partitionKey: data.type, // パーティションキーの指定
+            id: data.id, // Replace の場合に必要
+        };
+    });
+
+    const { resources: responses } = await container.items.bulk(operations);
+    return responses;
+}
+
+// サンプルデータ
+const dataArray = [
+    { type: "person", name: "Alice", age: 30 }, // IDなし（新規）
+    { id: "2", type: "car", brand: "Toyota", model: "Camry", year: 2021 }, // 更新
+    { id: "3", type: "product", name: "Laptop", price: 1400, specs: { cpu: "Intel i9", ram: "32GB" } }, // 更新
+    // ...more data
+];
+
+bulkUpsert(dataArray).then((responses) => {
+    console.log("Bulk upsert responses:", responses);
+});
+
+注意点
+
+	•	IDの指定: 新規登録の場合は id プロパティを指定しない、もしくはサーバー側で生成させることが一般的です。更新の場合は、既存の id を含めてください。
+	•	エラーハンドリング: 登録と更新の操作が混在しているため、エラーの発生も別々に処理するのが理想です。
 
