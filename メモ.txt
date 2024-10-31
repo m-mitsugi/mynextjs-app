@@ -433,3 +433,45 @@ bulkUpsert(dataArray).then((responses) => {
 	•	IDの指定: 新規登録の場合は id プロパティを指定しない、もしくはサーバー側で生成させることが一般的です。更新の場合は、既存の id を含めてください。
 	•	エラーハンドリング: 登録と更新の操作が混在しているため、エラーの発生も別々に処理するのが理想です。
 
+同一パーティションキー内であれば、Cosmos DB では Transactional Batch 機能を使って、複数の操作を1つのトランザクションとして扱えます。この機能を利用することで、同じパーティションキーを持つ複数のドキュメントに対して、Create（インサート）、Replace（更新）、Delete（削除）などの操作を一括で実行できます。
+
+Transactional Batch の特徴として、すべての操作が成功した場合のみ変更が確定し、いずれかの操作が失敗した場合にはすべての操作がロールバックされます。これにより、データの一貫性を確保できます。
+
+同一パーティションキー内でのトランザクションバッチの実装例
+
+次のコードでは、パーティションキー type: "product" に属する複数のデータを対象に、インサートと更新をトランザクションとしてまとめて実行しています。
+
+const { CosmosClient } = require("@azure/cosmos");
+
+const client = new CosmosClient({ endpoint, key });
+const database = client.database("your-database-id");
+const container = database.container("your-container-id");
+
+async function executeTransactionalBatch() {
+    const partitionKeyValue = "product"; // 同一パーティションキー
+
+    const batch = container.items.createTransactionalBatch(partitionKeyValue);
+
+    // バッチ内に複数の操作を追加
+    batch.create({ id: "4", type: "product", name: "Tablet", price: 500 });
+    batch.replace({ id: "3", type: "product", name: "Laptop", price: 1300, specs: { cpu: "Intel i9", ram: "32GB" } });
+
+    // トランザクションバッチの実行
+    const { resources: responses, statusCode } = await batch.execute();
+
+    if (statusCode >= 200 && statusCode < 300) {
+        console.log("Transaction succeeded:", responses);
+    } else {
+        console.log("Transaction failed. Rolled back.");
+    }
+}
+
+executeTransactionalBatch().then(() => console.log("Done"));
+
+注意点
+
+	•	同一パーティションキー内のみ: トランザクションバッチは、同一パーティションキー内のドキュメントに対してのみ有効です。異なるパーティションキーのドキュメントがバッチに含まれている場合、エラーになります。
+	•	サイズと操作数の制限: トランザクションバッチにはサイズと操作数の制限があり、制限を超えるとエラーが発生します。1バッチで扱える操作数の上限（現在は約100操作）と、サイズ制限（2MB）に注意してください。
+
+Transactional Batch を使うことで、同一パーティションキー内でのデータの一括操作を一貫性を保ちながら実行でき、インサートと更新の同時処理が可能になります。
+
