@@ -1,4 +1,4 @@
-# Next.js&Reactメモ
+ふ# Next.js&Reactメモ
 
 参考
 
@@ -475,3 +475,30 @@ executeTransactionalBatch().then(() => console.log("Done"));
 
 Transactional Batch を使うことで、同一パーティションキー内でのデータの一括操作を一貫性を保ちながら実行でき、インサートと更新の同時処理が可能になります。
 
+
+const { CosmosClient } = require("@azure/cosmos");
+
+const client = new CosmosClient({ endpoint: "YOUR_ENDPOINT", key: "YOUR_KEY" });
+const database = client.database("your-database-id");
+const container = database.container("your-container-id");
+
+async function executeBatch() {
+    const partitionKeyValue = "product"; // 同一パーティションキー
+
+    // バッチ操作の設定
+    const operations = [
+        { operationType: "Create", resourceBody: { id: "4", type: "product", name: "Tablet", price: 500 } },
+        { operationType: "Replace", id: "3", resourceBody: { type: "product", name: "Laptop", price: 1300, specs: { cpu: "Intel i9", ram: "32GB" } } },
+    ];
+
+    // バッチ操作の実行
+    const { statusCode, result } = await container.items.batch(partitionKeyValue, operations);
+
+    if (statusCode >= 200 && statusCode < 300) {
+        console.log("Transaction succeeded:", result);
+    } else {
+        console.log("Transaction failed. Rolled back.");
+    }
+}
+
+executeBatch().then(() => console.log("Done")).catch(console.error);
