@@ -502,3 +502,55 @@ async function executeBatch() {
 }
 
 executeBatch().then(() => console.log("Done")).catch(console.error);
+
+
+
+
+
+const items = [
+  { name: 'item1', type: 'A' },
+  { name: 'item2', type: 'B' },
+  { name: 'item3', type: 'A' },
+  { name: 'item4', type: 'C' }
+];
+
+// typeが 'A' のものだけを抽出
+const filteredItems = items.filter(item => item.type === 'A');
+
+console.log(filteredItems);
+
+
+
+
+
+let items1 = [
+  { name: 'item1', type: 'A' },
+  { name: 'item2', type: 'B' }
+];
+
+const items2 = [
+  { name: 'item3', type: 'A' },
+  { name: 'item4', type: 'C' }
+];
+
+// 条件： items1 に type 'A' がある場合に items2 を追加する
+if (items1.some(item => item.type === 'A')) {
+  items1 = items1.concat(items2); // items1にitems2を追加
+}
+
+console.log(items1);
+
+
+
+
+
+const obj = { name: 'sample' };
+
+// 条件に基づき複数のプロパティをまとめて追加
+const additionalProperties = { age: 25, city: 'Tokyo' };
+
+if (condition) {
+  Object.assign(obj, additionalProperties);
+}
+
+console.log(obj);
