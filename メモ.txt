@@ -554,3 +554,52 @@ if (condition) {
 }
 
 console.log(obj);
+
+
+
+
+Blob から File 型に変換する際には、File のプロパティ name と lastModified が必須です。これらを指定しないと、File インスタンスとして認識されません。
+
+必要なプロパティ
+
+	•	name: ファイルの名前を指定する文字列
+	•	lastModified: ファイルの最終更新日時を示すタイムスタンプ（ミリ秒）
+
+変換方法
+
+以下のコードで、Blob から File に変換する際に name と lastModified を指定します。
+
+function blobToFile(blob: Blob, fileName: string): File {
+    const lastModified = new Date().getTime(); // 現在時刻を使用する例
+    return new File([blob], fileName, { type: blob.type, lastModified });
+}
+
+これで、File 型に必要なプロパティが全て指定されるため、TypeScript の型エラーを回避できます。
+
+import React, { useState } from 'react';
+
+function App() {
+  const [file, setFile] = useState<File | null>(null);
+
+  // Blob を File に変換して state に保存する関数
+  const handleBlobToFile = (blob: Blob) => {
+    const fileName = "example.txt";
+    const lastModified = new Date().getTime(); // 最終更新日時を現在時刻に設定
+
+    const convertedFile = new File([blob], fileName, { type: blob.type, lastModified });
+    setFile(convertedFile);
+  };
+
+  return (
+    <div>
+      <button onClick={() => handleBlobToFile(new Blob(["Hello, world!"], { type: "text/plain" }))}>
+        ファイルを作成して保存
+      </button>
+      {file && <p>ファイル名: {file.name}</p>}
+    </div>
+  );
+}
+
+export default App;
+
+
