@@ -602,4 +602,26 @@ function App() {
 
 export default App;
 
+import React, { useState } from 'react';
 
+const MyComponent = () => {
+  const [items, setItems] = useState([]);
+
+  // 最新の配列の長さを取得する関数
+  const getLatestLength = () => {
+    setItems((prevItems) => {
+      const length = prevItems.length; // 最新の長さを取得
+      console.log("最新の配列の長さ:", length);
+      return prevItems; // 状態を変更せずに元の値を返す
+    });
+  };
+
+  return (
+    <div>
+      <button onClick={getLatestLength}>Get Latest Length</button>
+      <p>Current items count: {items.length}</p>
+    </div>
+  );
+};
+
+export default MyComponent;
