@@ -625,3 +625,45 @@ const MyComponent = () => {
 };
 
 export default MyComponent;
+
+const { CosmosClient } = require("@azure/cosmos");
+
+const endpoint = "<Your-CosmosDB-Endpoint>";
+const key = "<Your-CosmosDB-Key>";
+const databaseId = "<Your-Database-Id>";
+const containerId = "<Your-Container-Id>";
+
+const client = new CosmosClient({ endpoint, key });
+
+async function deleteItemsInBatches(idsToDelete) {
+  const database = client.database(databaseId);
+  const container = database.container(containerId);
+
+  // 100件ごとに分割
+  const chunkedIds = [];
+  for (let i = 0; i < idsToDelete.length; i += 100) {
+    chunkedIds.push(idsToDelete.slice(i, i + 100));
+  }
+
+  try {
+    for (const ids of chunkedIds) {
+      // バッチ操作の作成
+      const operations = ids.map(id => ({
+        operationType: "Delete",
+        id: id,
+        partitionKey: id // パーティションキーを指定（必要に応じて変更）
+      }));
+
+      // バッチ削除を実行
+      const response = await container.items.batch(operations);
+      console.log("Batch delete completed with status codes:", response.map(res => res.statusCode));
+    }
+  } catch (error) {
+    console.error("Batch delete failed:", error);
+  }
+}
+
+// 実行例
+const idsToDelete = Array.from({ length: 300 }, (_, i) => `item${i + 1}`); // 300件のID例
+deleteItemsInBatches(idsToDelete);
+
