@@ -667,3 +667,30 @@ async function deleteItemsInBatches(idsToDelete) {
 const idsToDelete = Array.from({ length: 300 }, (_, i) => `item${i + 1}`); // 300件のID例
 deleteItemsInBatches(idsToDelete);
 
+
+const { BlobServiceClient } = require('@azure/storage-blob');
+
+// Azure Storage の接続文字列
+const connectionString = "Your_Azure_Storage_Connection_String";
+const containerName = "your-container-name";
+const prefix = "your-prefix"; // 削除したいファイルの前方一致プレフィックス
+
+async function deleteBlobsWithPrefix() {
+    // BlobServiceClient を作成
+    const blobServiceClient = BlobServiceClient.fromConnectionString(connectionString);
+    
+    // コンテナクライアントを取得
+    const containerClient = blobServiceClient.getContainerClient(containerName);
+    
+    // プレフィックスで一致するファイルをリストし、削除
+    console.log(`Deleting files starting with '${prefix}':`);
+    for await (const blob of containerClient.listBlobsFlat({ prefix })) {
+        const blobClient = containerClient.getBlobClient(blob.name);
+        await blobClient.delete();
+        console.log(`- Deleted ${blob.name}`);
+    }
+}
+
+deleteBlobsWithPrefix().catch((error) => {
+    console.error("Error deleting blobs:", error.message);
+});
