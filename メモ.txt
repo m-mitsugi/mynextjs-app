@@ -694,3 +694,51 @@ async function deleteBlobsWithPrefix() {
 deleteBlobsWithPrefix().catch((error) => {
     console.error("Error deleting blobs:", error.message);
 });
+
+// 必要なライブラリをインポート
+const { CosmosClient } = require("@azure/cosmos");
+
+// Cosmos DB クライアントを初期化
+const endpoint = "https://<YOUR_COSMOS_DB_ACCOUNT>.documents.azure.com:443/";
+const key = "<YOUR_COSMOS_DB_KEY>";
+const client = new CosmosClient({ endpoint, key });
+
+// データベースとコンテナの指定
+const databaseId = "<YOUR_DATABASE_ID>";
+const containerId = "<YOUR_CONTAINER_ID>";
+
+async function bulkPatchDocuments() {
+  const container = client.database(databaseId).container(containerId);
+
+  // 一括で更新するデータの配列を作成
+  const updates = [
+    {
+      id: "document1-id",
+      operations: [{ op: "replace", path: "/propertyToUpdate", value: "newValue1" }]
+    },
+    {
+      id: "document2-id",
+      operations: [{ op: "replace", path: "/propertyToUpdate", value: "newValue2" }]
+    },
+    // 必要に応じて他のドキュメントも追加
+  ];
+
+  // Bulk PATCH 操作を実行
+  const patchOperations = updates.map((update) => {
+    return {
+      operationType: "Patch",
+      id: update.id,
+      partitionKey: "<PARTITION_KEY>",  // パーティションキーが必要な場合は指定
+      resourceBody: { operations: update.operations }
+    };
+  });
+
+  try {
+    const response = await container.items.bulk(patchOperations);
+    console.log("Bulk PATCH response:", response);
+  } catch (error) {
+    console.error("Bulk PATCH operation failed:", error);
+  }
+}
+
+bulkPatchDocuments();
